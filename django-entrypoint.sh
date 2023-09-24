@@ -1,6 +1,6 @@
 #!/bin/sh
 
-./wait-for-postgres.sh
+sh ./wait-for-postgres.sh
 
 python manage.py migrate
 python manage.py collectstatic --noinput
