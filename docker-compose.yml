@@ -1,0 +1,74 @@
+version: '3.1'
+services:
+  django:
+    container_name: django
+    build: .
+    volumes:
+      - static_volume:/picasso/django_static
+      - static_volume:/picasso/mediafiles
+    restart: unless-stopped
+    expose:
+      - 8000
+    env_file:
+      - .env
+    networks:
+      - myNetwork
+    depends_on:
+      - postgres
+      - redis
+    entrypoint: ./django-entrypoint.sh
+
+  celery:
+    container_name: celery
+    build: .
+    entrypoint: ./celery-entrypoint.sh
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - myNetwork
+    depends_on:
+      - django
+      - postgres
+      - redis
+
+  postgres:
+    container_name: postgres
+    image: postgres:15.4-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    networks:
+      - myNetwork
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - myNetwork
+
+  nginx:
+    container_name: nginx
+    build: nginx
+    volumes:
+      - static_volume:/picasso/django_static
+      - static_volume:/picasso/mediafiles
+    restart: always
+    ports:
+      - "8000:80"
+    networks:
+      - myNetwork
+
+
+networks:
+  myNetwork:
+    driver: bridge
+
+volumes:
+  static_volume: { }
+  media_volume: { }
